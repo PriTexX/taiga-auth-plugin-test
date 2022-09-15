@@ -9,25 +9,30 @@ This is a fork of [Monogramm/taiga-contrib-ldap-auth-ext](https://github.com/Mon
 Compared to Monogramm/taiga-contrib-ldap-auth-ext, this repo has the following changes:
 
 * Sanitize the username before using it in an LDAP filter, preventing LDAP injection (feature branch [`sanitize-data-before-passing-to-ldap`](https://github.com/TuringTux/taiga-contrib-ldap-auth-ext/tree/sanitize-data-before-passing-to-ldap), [PR #47 in the Monogramm repo](https://github.com/Monogramm/taiga-contrib-ldap-auth-ext/pull/47))
-* Updated README: Explanations for Docker added, sample configuration adjusted
+* Add step-by-step Docker setup guide to README
+* Adjust sample configuration in README
 
 You can always also [compare the changes in-depth on GitHub](https://github.com/Monogramm/taiga-contrib-ldap-auth-ext/compare/master...TuringTux:taiga-contrib-ldap-auth-ext:master).
 
-## Installation
+## :whale: Installation & Configuration with Docker
 
-You can use pip to install this fork directly from Git in your `taiga-back` environment:
+If you installed a dockerized Taiga using the 30 Minute Setup approach, you should be able to install this plugin using this guide.
 
-```bash
-pip install git+https://github.com/TuringTux/taiga-contrib-ldap-auth-ext.git
-```
-
-🐋 If you use the Taiga Docker setup, see the “Installation & Configuration with Docker“ section below.
-
-## Configuration
+The following will assume that you have a clone of the [kaleidos-ventures/taiga-docker](https://github.com/kaleidos-ventures/taiga-docker) repository on the computer you want to host Taiga on.
 
 ### taiga-back
 
-Add the following settings. You can either insert them into `settings/common.py` or append them to `settings/config.py` – both worked in our tests.
+1. Edit the `taiga-back` section in the `docker-compose.yml`: Replace `image: taigaio/taiga-back:latest` with `build: ./custom-back`
+2. Create a folder `custom-back` next to the `docker-compose.yml` file
+3. In this folder, create a file `config.append.py`. The contents of the file are collapsed below.
+4.  In this folder, also create a `Dockerfile`. The contents of the file are collapsed below.
+
+If you were to start Taiga now, it would not pull the `taiga-back` directly from Docker Hub but instead build the image from the specified `Dockerfile`. This is exactly what we want, however, do not start Taiga yet – there is still work to be done in `taiga-front`.
+
+#### `custom-back/config.append.py`
+
+<details>
+<summary>Click here to expand</summary>
 
 ```python
 INSTALLED_APPS += ["taiga_contrib_ldap_auth_ext"]
@@ -35,124 +40,110 @@ INSTALLED_APPS += ["taiga_contrib_ldap_auth_ext"]
 LDAP_SERVER = "ldaps://ldap.example.com"
 LDAP_PORT = 636
 
-# Note (1): This uses an encrypted ldap connection (like https:// in the browser) and
-# should be safe by default.
+LDAP_BIND_DN = "CN=SVC Account,OU=Service Accounts,OU=Servers,DC=example,DC=com"
+LDAP_BIND_PASSWORD = "verysecurepassword"
 
-# Note (2): If you want to use unencrypted, insecure LDAP instead, use the following:
-# LDAP_SERVER = "ldap://ldap.example.com"
-# LDAP_PORT = 389
-
-# Note (3): If you want to use LDAP with STARTTLS before bind, use the following:
-# LDAP_SERVER = "ldap://ldap.example.com"
-# LDAP_PORT = 389
-# LDAP_START_TLS = True
-
-# Note (4): Specifying multiple LDAP servers is currently not supported, see
-# https://github.com/Monogramm/taiga-contrib-ldap-auth-ext/issues/16
-
-# Full DN of the service account use to connect to LDAP server and search for login user's account entry
-# If LDAP_BIND_DN is not specified, or is blank, then an anonymous bind is attempated
-LDAP_BIND_DN = 'CN=SVC Account,OU=Service Accounts,OU=Servers,DC=example,DC=com'
-LDAP_BIND_PASSWORD = '<REPLACE_ME>'
-
-# Starting point within LDAP structure to search for login user
 LDAP_SEARCH_BASE = 'OU=DevTeam,DC=example,DC=net'
 
-# Additional search criteria to the filter (will be ANDed)
-#LDAP_SEARCH_FILTER_ADDITIONAL = '(mail=*)'
-
-# Names of attributes to get username, e-mail and full name values from
-# These fields need to have a value in LDAP 
-LDAP_USERNAME_ATTRIBUTE = 'uid'
-LDAP_EMAIL_ATTRIBUTE = 'mail'
-LDAP_FULL_NAME_ATTRIBUTE = 'displayName'
+LDAP_USERNAME_ATTRIBUTE = "uid"
+LDAP_EMAIL_ATTRIBUTE = "mail"
+LDAP_FULL_NAME_ATTRIBUTE = "givenName"
 
 LDAP_SAVE_LOGIN_PASSWORD = False
-# Note: If you want to store the passwords in the local database as well, remove
-# the line above.
 
 LDAP_MAP_USERNAME_TO_UID = None
-# Note: This means "use the entered username as LDAP uid as-is, do not use any mapping"
-# Sanitization of the username is nevertheless performed, so don't worry.
-# This only fixes a bug (if left out, the plugin would try to use a mapping function
-# that cannot be used for this purpose).
-
-# ... A few more options can be found in the Monogramm repository
 ```
 
-A dedicated domain service account user (specified by `LDAP_BIND_DN`)
-performs a search on LDAP for an account that has a
-`LDAP_USERNAME_ATTRIBUTE` or `LDAP_EMAIL_ATTRIBUTE` matching the
-user-provided login.
+Change the following fields matching your setup:
 
-If the search is successful, then the returned entry and the
-user-provided password are used to attempt a bind to LDAP. If the bind is
-successful, then we can say that the user is authorised to log in to
-Taiga.
+**`LDAP_SERVER` and `LDAP_PORT`:** You will definitely have to change the server URL. If possible, try to keep the `ldaps://` to use a secure connection. The port can likely stay as is, unless...
 
-If the `LDAP_BIND_DN` configuration setting is not specified or is
-blank, then an anonymous bind is attempted to search for the login
-user's LDAP account entry.
+* ... you run the LDAP server on a different (non-standard) port.
+* ... you want to use unencrypted, insecure LDAP: In this case, change `ldaps://` to `ldap://` and the port to 389.
+* ... you want to use STARTTLS. In this case, you have to make the same changes as for unencrypted, insecure LDAP and set `LDAP_START_TLS = True`, making the section look like this:
+    ```python
+    LDAP_SERVER = "ldap://ldap.example.com"
+    LDAP_PORT = 389
+    LDAP_START_TLS = True
+    ```
+    What happens is that an unencrypted connection is established first, but then upgraded to a secure connection. To the best of my knowledge, this should also be safe – however, I like the `ldaps://` variant more.
 
-**RECOMMENDATION**: for security reasons, if you are using a service
-account for performing the LDAP search, it should be configured to only
-allow reading/searching the LDAP structure. No other LDAP (or wider
-network) permissions should be granted for this user because you need
-to specify the service account password in the configuration file. A
-suitably strong password should be chosen, eg. VmLYBbvJaf2kAqcrt5HjHdG6
+**`LDAP_BIND_DN`, `LDAP_BIND_PASSWORD`**: You will need to change them. 
 
+The bind user is a dedicated service account. The plugin will connect to the LDAP server using this service account and search for an LDAP entry that has a `LDAP_USERNAME_ATTRIBUTE` or `LDAP_EMAIL_ATTRIBUTE` matching the user-provided login.
 
-**Notes:**
-* if you are using the Taiga's built-in `USER_EMAIL_ALLOWED_DOMAINS` config option, all LDAP email addresses will still be filtered through this list. Ensure that if `USER_EMAIL_ALLOWED_DOMAINS` != `None`, that your corporate LDAP email domain is also listed there. This is due to the fact that LDAP users are automatically "registered" behind the scenes on their first login.
-* if you plan to only allow your LDAP users to access Taiga, set the `PUBLIC_REGISTER_ENABLED` config option to `False`. This will prevent any external user to register while still automatically register LDAP users on their first login.
+If the search is successful, the found LDAP entry and the user-provided password are used to attempt a bind to LDAP. If the bind is successful, then we can say that the user is authorised to log in to Taiga.
+
+If `LDAP_BIND_DN` is not specified or blank, an anonymous bind is attempted.
+
+It is recommended to limit the service account and only allow it to read and search the LDAP structure (no write or other LDAP access). The credentials should also not be used for any other account on the network. This minimizes the damage in cases of a successful LDAP injection or if you ever accidentially give someone access to the configuration file (e.g. by committing it into version control or having misconfigured permissions). Use a suitably strong, ideally randomly generated password.
+
+**`LDAP_SEARCH_BASE`**: The subtree where the users are located.
+
+**`LDAP_USERNAME_ATTRIBUTE`, `LDAP_EMAIL_ATTRIBUTE`, `LDAP_FULL_NAME_ATTRIBUTE`**: These are the LDAP attributes used to get the username, email and full name shown in the Taiga application. They need to have a value in LDAP. Depending on your LDAP setup, you might need to change them.
+
+**`LDAP_SAVE_LOGIN_PASSWORD`**: Set this to `True` or remove the line if you want to store the passwords in the local database as well.
+
+**`LDAP_MAP_USERNAME_TO_UID`**: This line fixes a bug. If omitted, the plugin will likely crash and no authentication is possible.
+
+There are several more configurable options. See the original Monogramm plugin repository for more details.
+</details>
+
+#### `custom-back/Dockerfile`
+
+<details>
+<summary>Click here to expand</summary>
+
+```Dockerfile
+FROM taigaio/taiga-back:latest
+
+# Insert custom configuration into the taiga configuration file
+COPY config.append.py /taiga-back/settings
+RUN cat /taiga-back/settings/config.append.py >> /taiga-back/settings/config.py && rm /taiga-back/settings/config.append.py
+
+# Install git, because we need it to install the taiga-ldap-contrib-auth-ext package
+RUN apt-get update \
+    && apt-get install -y git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install git+https://github.com/TuringTux/taiga-contrib-ldap-auth-ext-2.git
+
+RUN apt-get purge -y git \
+    && apt-get autoremove -y
+```
+
+The statements in the Dockerfile have the following effect:
+
+1. `FROM ...` bases the image we build on the official `taigaio/taiga-back` image.
+2. `COPY ...` and `RUN ...` copy the `config.append.py` file into the container, append it to `/taiga-back/settings/config.py` and then delete it again.
+3. `RUN apt-get ...` fetches the apt package lists, installs Git and removes the lists again (to save some space)
+4. `RUN pip install ...` installs this plugin directly from Git (this is why we had to install Git)
+5. `RUN apt-get purge ...` removes Git again (and all its dependencies) because we only needed it to install the plugin.
+</details>
 
 ### taiga-front
 
-Change the `loginFormType` setting to `"ldap"` in `dist/conf.json`:
+1. Edit the `taiga-front` section in the `docker-compose.yml`. Insert the following below `networks`:
 
-```json
-    ...
-    "loginFormType": "ldap",
-    ...
-```
-
-## Installation & Configuration with Docker
-
-If you installed Taiga using the [`taiga-docker`](https://github.com/kaleidos-ventures/taiga-docker) repository, try the following.
-
-### taiga-back
-
-1. Edit the `taiga-back` section in the `docker-compose.yml`: Replace `image: taigaio/taiga-back:latest` with `build: ./custom-back`
-2. Create a folder `custom-back` next to the `docker-compose.yml` file
-3. In this folder, create a file `config.append.py` with the added configuration for `taiga-back` (the one we described above).
-4. In this folder, also create a `Dockerfile` with the following content:
-
-    ```Dockerfile
-    FROM taigaio/taiga-back:latest
-
-    # Insert custom configuration into the taiga configuration file
-    COPY config.append.py /taiga-back/settings
-    RUN cat /taiga-back/settings/config.append.py >> /taiga-back/settings/config.py && rm /taiga-back/settings/config.append.py
- 
-    # Install git, because we need it to install the taiga-ldap-contrib-auth-ext package
-    RUN apt-get update \
-        && apt-get install -y git \
-        && rm -rf /var/lib/apt/lists/*
-
-    RUN pip install git+https://github.com/TuringTux/taiga-contrib-ldap-auth-ext-2.git
-
-    RUN apt-get purge -y git \
-        && apt-get autoremove -y
+    ```yml
+    volumes:
+    - ./custom-front/conf.override.json:/usr/share/nginx/html/conf.json
     ```
 
-If you now start Taiga like you would normally in the Docker setup, the `taiga-back` image will not be pulled directly from Docker Hub, instead, the `Dockerfile` you just specified will be built:
+    There should already be a commented block hinting that you can do this (just with a different path). You can delete this block, or, alternatively, place the file at the path given there and just remove the `# `.
 
-- This image is based on the latest `taigaio/taiga-back` image.
-- It however, also inserts the relevant configuration.
-- Furthermore, it fetches the apt package lists, installs Git and removes the lists again (to save some space)
-- It then installs this plugin directly from GitHub
-- Afterwards, Git is removed from the image because it isn't needed in production.
+2. Create a folder `custom-front` next to the `docker-compose.yml` file
+3. In this folder, create a file `conf.override.json`. The contents of the file are collapsed below.
 
-### taiga-front
+#### `custom-front/conf.override.json`
 
-You have to create a custom `conf.json` and mount it into the container. To do so, you have to edit the `docker-compose.yml` file.
+This file needs to contain (among the default options) the entry:
+
+```json
+"loginFormType": "ldap",
+```
+
+## :bulb: Further notes
+
+* If you are using the Taiga's built-in `USER_EMAIL_ALLOWED_DOMAINS` config option, all LDAP email addresses will still be filtered through this list. Ensure that if `USER_EMAIL_ALLOWED_DOMAINS` != `None`, that your corporate LDAP email domain is also listed there. This is due to the fact that LDAP users are automatically "registered" behind the scenes on their first login.
+* Instead of appending to the `config.py` file in `taiga-back`, you can also insert the configuration into `common.py`. In our tests, both ways worked.
