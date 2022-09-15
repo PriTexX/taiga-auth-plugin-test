@@ -1,35 +1,29 @@
-![PyPI - License](https://img.shields.io/pypi/l/taiga-contrib-ldap-auth-ext.svg)
-[![PyPI - Status](https://img.shields.io/pypi/status/taiga-contrib-ldap-auth-ext.svg)](https://pypi.org/project/taiga-contrib-ldap-auth-ext/)
-[![PyPI](https://img.shields.io/pypi/v/taiga-contrib-ldap-auth-ext.svg)](https://pypi.org/project/taiga-contrib-ldap-auth-ext/)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/taiga-contrib-ldap-auth-ext.svg)](https://pypistats.org/packages/taiga-contrib-ldap-auth-ext)
-[![Managed with Taiga.io](https://img.shields.io/badge/managed%20with-TAIGA.io-709f14.svg)](https://tree.taiga.io/project/monogrammbot-monogrammtaiga-contrib-ldap-auth-ext/ "Managed with Taiga.io")
+![PyPI - License](https://img.shields.io/pypi/l/taiga-contrib-ldap-auth-ext.svg?style=flat-square)
 
 # Taiga contrib ldap auth
 
 Extended [Taiga.io](https://taiga.io/) plugin for LDAP authentication.
 
-This is a fork of [ensky/taiga-contrib-ldap-auth](https://github.com/ensky/taiga-contrib-ldap-auth) which also retrieves the various contributions and other forks into one.
+This is a fork of [Monogramm/taiga-contrib-ldap-auth-ext](https://github.com/Monogramm/taiga-contrib-ldap-auth-ext), which, in turn, is a fork of [ensky/taiga-contrib-ldap-auth](https://github.com/ensky/taiga-contrib-ldap-auth).
 
+Compared to Monogramm/taiga-contrib-ldap-auth-ext, this repo has the following changes:
+
+* Sanitize the username before using it in an LDAP filter, preventing LDAP injection (feature branch [`sanitize-data-before-passing-to-ldap`](https://github.com/TuringTux/taiga-contrib-ldap-auth-ext/tree/sanitize-data-before-passing-to-ldap), [PR #47 in the Monogramm repo](https://github.com/Monogramm/taiga-contrib-ldap-auth-ext/pull/47))
+* Updated README
 
 ## Installation
 
-Install the PIP package `taiga-contrib-ldap-auth-ext` in your
-`taiga-back` python virtualenv:
+Install using pip in the `taiga-back` environment. If you are using the dockerized version, you might want to create a custom image based on the taiga-back image, which has Git and this package installed.
 
 ```bash
-  pip install taiga-contrib-ldap-auth-ext
+pip install git+https://github.com/TuringTux/taiga-contrib-ldap-auth-ext.git
 ```
-
-If needed, change `pip` to `pip3` to use the Python 3 version.
-
-For an even simpler installation, you can use our own Docker image: <https://github.com/Monogramm/docker-taiga>
-
 
 ## Configuration
 
 ### taiga-back
 
-Add the following to `settings/local.py` for Taiga <=5.0 or `settings/common.py` for Taiga >5.0:
+Add the following to `settings/common.py` (for Taiga >5.0). Note that changing `settings/config.py` does not work, you have to change `settings/common.py`:
 
 ```python
 INSTALLED_APPS += ["taiga_contrib_ldap_auth_ext"]
