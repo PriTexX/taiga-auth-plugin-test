@@ -1,6 +1,6 @@
 ![PyPI - License](https://img.shields.io/pypi/l/taiga-contrib-ldap-auth-ext.svg?style=flat-square)
 
-# Taiga contrib ldap auth
+# Taiga contrib ldap auth ext²
 
 Extended [Taiga.io](https://taiga.io/) plugin for LDAP authentication.
 
