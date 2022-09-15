@@ -86,6 +86,8 @@ It is recommended to limit the service account and only allow it to read and sea
 
 **`LDAP_MAP_USERNAME_TO_UID`**: This line fixes a bug. If omitted, the plugin will likely crash and no authentication is possible.
 
+<!-- TODO: Explain this -->
+
 There are several more configurable options. See the original Monogramm plugin repository for more details.
 </details>
 
@@ -142,6 +144,8 @@ This file needs to contain (among the default options) the entry:
 ```json
 "loginFormType": "ldap",
 ```
+
+<!-- TODO: Extend this section -->
 
 ## :bulb: Further notes
 
