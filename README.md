@@ -23,7 +23,7 @@ pip install git+https://github.com/TuringTux/taiga-contrib-ldap-auth-ext.git
 
 ### taiga-back
 
-Add the following to `settings/common.py` (for Taiga >5.0). Note that changing `settings/config.py` does not work, you have to change `settings/common.py`:
+Add the following settings. You can either insert them into `settings/common.py` or append them to `settings/config.py` – both worked in our tests.
 
 ```python
 INSTALLED_APPS += ["taiga_contrib_ldap_auth_ext"]
