@@ -139,7 +139,7 @@ If you installed Taiga using the [`taiga-docker`](https://github.com/kaleidos-ve
         && apt-get install -y git \
         && rm -rf /var/lib/apt/lists/*
 
-    RUN pip install pip install git+https://github.com/TuringTux/taiga-contrib-ldap-auth-ext.git
+    RUN pip install git+https://github.com/TuringTux/taiga-contrib-ldap-auth-ext.git
 
     RUN apt-get purge -y git \
         && apt-get autoremove -y
