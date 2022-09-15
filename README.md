@@ -118,9 +118,9 @@ Change the `loginFormType` setting to `"ldap"` in `dist/conf.json`:
 
 ## Installation & Configuration with Docker
 
-### taiga-back
+If you installed Taiga using the [`taiga-docker`](https://github.com/kaleidos-ventures/taiga-docker) repository, try the following.
 
-If you installed Taiga using the [`taiga-docker`](https://github.com/kaleidos-ventures/taiga-docker) repository, try the following:
+### taiga-back
 
 1. Edit the `taiga-back` section in the `docker-compose.yml`: Replace `image: taigaio/taiga-back:latest` with `build: ./custom-back`
 2. Create a folder `custom-back` next to the `docker-compose.yml` file
@@ -152,3 +152,7 @@ If you now start Taiga like you would normally in the Docker setup, the `taiga-b
 - Furthermore, it fetches the apt package lists, installs Git and removes the lists again (to save some space)
 - It then installs this plugin directly from GitHub
 - Afterwards, Git is removed from the image because it isn't needed in production.
+
+### taiga-front
+
+You have to create a custom `conf.json` and mount it into the container. To do so, you have to edit the `docker-compose.yml` file.
