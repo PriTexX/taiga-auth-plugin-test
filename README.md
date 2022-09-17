@@ -139,13 +139,22 @@ The statements in the Dockerfile have the following effect:
 
 #### `custom-front/conf.override.json`
 
-This file needs to contain (among the default options) the entry:
+This file will replace the `conf.json` file. As the `conf.json` is normally automatically generated at runtime from the configuration in your `docker-compose.yml`, this is a bit trickier. Basically, the process boils down to this:
 
-```json
-"loginFormType": "ldap",
-```
+1. Somehow get a valid `conf.json`
+2. Create a modified version by adding the following entry somewhere in the JSON: 
+    ```json
+    "loginFormType": "ldap",
+    ```
 
-<!-- TODO: Extend this section -->
+The question is: How do you get a valid `conf.json`?
+
+* The [relevant section of the Taiga 30 min setup guide](https://community.taiga.io/t/taiga-30min-setup/170#map-a-confjson-file-23) recommends to use an example `config.json` which you then have to adjust.
+* Alternatively, you could also start the container first without any adjustments, and then copy the file out like this:
+    ```bash
+    docker cp taiga_taiga-front_1:/usr/share/nginx/html/conf.json conf.json
+    ```
+    You then have a valid, production-ready `conf.json` you can just extend by the entry mentioned above. I'd recommend this method.
 
 ## :bulb: Further notes
 
