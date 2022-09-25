@@ -8,7 +8,6 @@ This is a fork of [Monogramm/taiga-contrib-ldap-auth-ext](https://github.com/Mon
 
 Compared to Monogramm/taiga-contrib-ldap-auth-ext, this repo has the following changes:
 
-* Sanitize the username before using it in an LDAP filter, preventing LDAP injection (feature branch [`sanitize-data-before-passing-to-ldap`](https://github.com/TuringTux/taiga-contrib-ldap-auth-ext/tree/sanitize-data-before-passing-to-ldap), [PR #47 in the Monogramm repo](https://github.com/Monogramm/taiga-contrib-ldap-auth-ext/pull/47))
 * Add step-by-step Docker setup guide to README
 * Adjust sample configuration in README
 
