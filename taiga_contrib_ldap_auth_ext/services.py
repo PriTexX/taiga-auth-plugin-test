@@ -12,16 +12,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import transaction as tx
-from django.conf import settings
 from django.apps import apps
 
 from taiga.base.connectors.exceptions import ConnectorBaseException, BaseException
-from taiga.base.utils.slug import slugify_uniquely
 from taiga.auth.services import send_register_email
 from taiga.auth.services import make_auth_response_data
 from taiga.auth.signals import user_registered as user_registered_signal
-from taiga.auth.services import get_auth_plugins
-from taiga.auth.api import get_token
 
 from . import connector
 
@@ -41,6 +37,7 @@ def ldap_login_func(request):
     """
     # although the form field is called 'username', it can be an e-mail
     # (or any other attribute)
+    print("In login func")
     login_input = request.DATA.get('username', None)
     password_input = request.DATA.get('password', None)
 
