@@ -25,17 +25,6 @@ from taiga.auth.api import get_token
 
 from . import connector
 
-FALLBACK = getattr(settings, 'LDAP_FALLBACK', 'normal')
-
-SLUGIFY = getattr(settings, 'LDAP_MAP_USERNAME_TO_UID', slugify_uniquely)
-EMAIL_MAP = getattr(settings, 'LDAP_MAP_EMAIL', '')
-NAME_MAP = getattr(settings, 'LDAP_MAP_NAME', '')
-SAVE_USER_PASSWD = getattr(settings, 'LDAP_SAVE_LOGIN_PASSWORD', True)
-
-# TODO https://github.com/Monogramm/taiga-contrib-ldap-auth-ext/issues/17
-# Taiga super users group id
-#GROUP_ADMIN = getattr(settings, 'LDAP_GROUP_ADMIN', '')
-
 
 def ldap_login_func(request):
     """
@@ -55,33 +44,13 @@ def ldap_login_func(request):
     login_input = request.DATA.get('username', None)
     password_input = request.DATA.get('password', None)
 
-    try:
-        username, email, full_name = connector.login(
-            username=login_input, password=password_input)
-    except connector.LDAPUserLoginError as ldap_error:
-        # If no fallback authentication is specified, raise the original LDAP error
-        if not FALLBACK:
-            raise
+    username, email, full_name = connector.login(
+        username=login_input, password=password_input)
 
-        # Try fallback authentication
-        try:
-            if FALLBACK == "normal":
-                return get_token(request.DATA)
-            return get_auth_plugins()[FALLBACK]["login_func"](request)
-        except BaseException as normal_error:
-            # Merge error messages of 'normal' and 'ldap' auth.
-            raise ConnectorBaseException({
-                "error_message": {
-                    "ldap": ldap_error.detail["error_message"],
-                    FALLBACK: normal_error.detail
-                }
-            })
-    else:
-        # LDAP Auth successful
-        user = register_or_update(
-            username=username, email=email, full_name=full_name, password=password_input)
-        data = make_auth_response_data(user)
-        return data
+    user = register_or_update(
+        username=username, email=email, full_name=full_name, password=password_input)
+    data = make_auth_response_data(user)
+    return data
 
 
 @tx.atomic
@@ -96,14 +65,6 @@ def register_or_update(username: str, email: str, full_name: str, password: str)
     user_model = apps.get_model('users', 'User')
 
     username_unique = username
-    if SLUGIFY:
-        username_unique = SLUGIFY(username)
-
-    if EMAIL_MAP:
-        email = EMAIL_MAP(email)
-
-    if NAME_MAP:
-        full_name = NAME_MAP(full_name)
 
     # TODO https://github.com/Monogramm/taiga-contrib-ldap-auth-ext/issues/15
     # TODO https://github.com/Monogramm/taiga-contrib-ldap-auth-ext/issues/17
@@ -118,20 +79,12 @@ def register_or_update(username: str, email: str, full_name: str, password: str)
                                          email=email,
                                          full_name=full_name,
                                          is_superuser=superuser)
-        if SAVE_USER_PASSWD:
-            # Set local password to match LDAP (issues/21)
-            user.set_password(password)
-
         user.save()
 
         user_registered_signal.send(sender=user.__class__, user=user)
         send_register_email(user)
     else:
-        if SAVE_USER_PASSWD:
-            # Set local password to match LDAP (issues/21)
-            user.set_password(password)
-        else:
-            user.set_password(None)
+        user.set_password(None)
 
         user.save()
         # update DB entry if LDAP field values differ
