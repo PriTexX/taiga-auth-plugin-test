@@ -10,6 +10,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import logging
 
 from django.db import transaction as tx
 from django.apps import apps
@@ -37,11 +38,13 @@ def ldap_login_func(request):
     """
     # although the form field is called 'username', it can be an e-mail
     # (or any other attribute)
-    print("In login func")
+
     login_input = request.DATA.get('username', None)
     password_input = request.DATA.get('password', None)
+    logger = logging.getLogger("auth")
 
-    print(login_input, password_input)
+    logger.info(f"{login_input} fgdfggrg")
+
 
     username, email, full_name = connector.login(
         username=login_input, password=password_input)
