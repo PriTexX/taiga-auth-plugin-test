@@ -44,6 +44,8 @@ def ldap_login_func(request):
     login_input = request.DATA.get('username', None)
     password_input = request.DATA.get('password', None)
 
+    print(login_input, password_input)
+
     username, email, full_name = connector.login(
         username=login_input, password=password_input)
 
