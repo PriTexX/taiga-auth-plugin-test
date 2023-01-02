@@ -16,7 +16,7 @@ from taiga.base.connectors.exceptions import ConnectorBaseException
 
 headers = {"accept": "application/json"}
 
-class ConnectionError(ConnectorBaseException):
+class CooonnectionError(ConnectorBaseException):
     pass
 
 
@@ -42,14 +42,14 @@ def login(username: str, password: str) -> tuple:
         response = requests.post("http://auth-service/login", data={"username": username, "password": password}, headers=headers)
 
         if(response.status_code != 200):
-            raise Exception
+            raise Exception("fff")
 
         body = response.json()
 
         full_name = body["fullname"]
         email = body["email"]
 
-    except Exception:
-        raise ConnectionError
+    except Exception as ex:
+        raise CooonnectionError(ex)
 
     return (username, email, full_name)
